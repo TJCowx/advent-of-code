@@ -34,6 +34,12 @@ go run main.go 1-2 # Runs day 1 part 2
 go run main.go 1 # Runs just day 1
 ```
 
+To run the tests
+```bash
+go test -v ./day01.go
+```
+
+
 ## Execution
 
 I put the 🌟 on what I have completed and executions times
@@ -48,7 +54,7 @@ Runtimes based on
 
 | Day | Completed | P1 Runtime | P2 Runtime |
 |-----|:---------:|-----------:|-----------:|
-| 01  |           |            |            |
+| 01  |    🌟     | 92.617µs   |            |
 | 02  |           |            |            |
 | 03  |           |            |            |
 | 04  |           |            |            |

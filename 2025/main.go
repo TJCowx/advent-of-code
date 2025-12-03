@@ -18,9 +18,9 @@ func main() {
 		"1": day01.Run,
 	}
 
-	if runFunc, exists := dayFuncs[day]; exists {
-		runFunc(part)
+	if runFunc, exists := dayFuncs[input.Day]; exists {
+		runFunc(input.Part)
 	} else {
-		fmt.Printf("Day %s not found", day)
+		fmt.Printf("Day %s not found", input.Day)
 	}
 }

@@ -7,8 +7,8 @@ import (
 )
 
 type ParsedInput struct {
-	day  string
-	part *string
+	Day  string
+	Part *string
 }
 
 // Parses the console input for the runner, returns if the input is correct
@@ -27,14 +27,14 @@ func ParseUserInput() (ParsedInput, error) {
 
 	if len(parts) == 1 {
 		return ParsedInput{
-			day:  parts[0],
-			part: nil,
+			Day:  parts[0],
+			Part: nil,
 		}, nil
 	}
 
 	part := parts[1]
 	return ParsedInput{
-		day:  parts[0],
-		part: &part,
+		Day:  parts[0],
+		Part: &part,
 	}, nil
 }
