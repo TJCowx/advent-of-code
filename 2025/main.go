@@ -2,6 +2,7 @@ package main
 
 import (
 	"advent-of-code/2025/day01"
+	"advent-of-code/2025/day02"
 	"advent-of-code/go_utils"
 	"fmt"
 	"log"
@@ -16,6 +17,7 @@ func main() {
 
 	dayFuncs := map[string]func(*string){
 		"1": day01.Run,
+		"2": day02.Run,
 	}
 
 	if runFunc, exists := dayFuncs[input.Day]; exists {

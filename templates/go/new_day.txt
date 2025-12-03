@@ -13,12 +13,17 @@ func Run(part *string) {
 
 func part1(path string) int {
 	fmt.Println("Day <DAY>, Part 1: START")
+	result := 0
 
-	return 0
+	fmt.Printf("day <DAY>, part 1 result: %d | %s\n", result, timer.TimeLapsed())
+	return result
 }
 
 func part2(path string) int {
 	fmt.Println("Day <DAY>, Part 2: START")
+	result := 0
 
-	return 0
+	fmt.Printf("day <DAY>, part 1 result: %d | %s\n", result, timer.TimeLapsed())
+
+	return result
 }
