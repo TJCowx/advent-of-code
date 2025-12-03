@@ -20,22 +20,30 @@ type Range struct {
 }
 
 func getInput(path string) []Range {
-	input, err := go_utils.Read(path)
+	input, err := go_utils.ReadIntoStrArr(path)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ranges_in := strings.Split(input, ",")
+	ranges_in := strings.Split(input[0], ",")
 
 	ranges_out := []Range{}
-	for _, r := range ranges_in {
+	for i, r := range ranges_in {
 		grouping := strings.Split(r, "-")
 		start, _ := strconv.Atoi(grouping[0])
-		end, _ := strconv.Atoi(grouping[1])
+		endOfRange, err := strconv.Atoi(grouping[1])
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if i == len(ranges_in)-1 {
+			fmt.Printf("Uhm okay: %s | START: %d, END: %d | %s, %s", r, start, endOfRange, grouping[0], grouping[1])
+		}
 		ranges_out = append(ranges_out, Range{
 			start: start,
-			end:   end,
+			end:   endOfRange,
 		})
 	}
 
@@ -54,8 +62,8 @@ func bruteForceRangeP1(r Range) int {
 		mid := len(idAsStr) / 2
 
 		if idAsStr[:mid] == idAsStr[mid:] {
-			fmt.Printf("INVALID ID: %d\n", id)
 			validIdSum += id
+			// fmt.Printf("INVALID ID: %d (%d)\n", id, validIdSum)
 		}
 	}
 
@@ -65,12 +73,14 @@ func bruteForceRangeP1(r Range) int {
 func part1(path string) int {
 	fmt.Println("Day 02, Part 1: START")
 	ranges := getInput(path)
+	fmt.Println(ranges)
 	timer := go_utils.Timer{}
 	result := 0
 	timer.Start()
 
 	for _, r := range ranges {
 		result += bruteForceRangeP1(r)
+		// fmt.Printf("New Total: %d\n", result)
 	}
 	timer.End()
 	fmt.Printf("day 02, part 1 result: %d | %s\n", result, timer.TimeLapsed())
