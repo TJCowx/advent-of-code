@@ -52,18 +52,8 @@ func bruteForceRangeP1(r Range) int {
 		}
 
 		mid := len(idAsStr) / 2
-		left := idAsStr[:mid]
-		right := idAsStr[mid:]
-		isValid := true
 
-		for j := 0; j < len(left); j++ {
-			if left[j] != right[j] {
-				isValid = false
-				break
-			}
-		}
-
-		if isValid {
+		if idAsStr[:mid] == idAsStr[mid:] {
 			fmt.Printf("INVALID ID: %d\n", id)
 			validIdSum += id
 		}
@@ -77,11 +67,12 @@ func part1(path string) int {
 	ranges := getInput(path)
 	timer := go_utils.Timer{}
 	result := 0
+	timer.Start()
 
 	for _, r := range ranges {
 		result += bruteForceRangeP1(r)
 	}
-
+	timer.End()
 	fmt.Printf("day 02, part 1 result: %d | %s\n", result, timer.TimeLapsed())
 	return result
 }
@@ -90,7 +81,9 @@ func part2(path string) int {
 	fmt.Println("Day 02, Part 2: START")
 	timer := go_utils.Timer{}
 	result := 0
+	timer.Start()
 
+	timer.End()
 	fmt.Printf("day 02, part 1 result: %d | %s\n", result, timer.TimeLapsed())
 	return 0
 }
