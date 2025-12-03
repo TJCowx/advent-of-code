@@ -1,0 +1,24 @@
+package day<DAY>
+
+import (
+	"advent-of-code/go_utils"
+	"fmt"
+)
+
+// https://adventofcode.com/2025/day/<DAY_NO_LEAD>
+
+func Run(part *string) {
+	go_utils.RunParts(part, "day<DAY>/input.txt", part1, part2)
+}
+
+func part1(path string) int {
+	fmt.Println("Day <DAY>, Part 1: START")
+
+	return 0
+}
+
+func part2(path string) int {
+	fmt.Println("Day <DAY>, Part 2: START")
+
+	return 0
+}
