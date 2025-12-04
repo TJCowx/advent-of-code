@@ -90,9 +90,6 @@ func getHighestCombo(bank []int, currI int, currCombo []int, bankSize int) int {
 
 	highestCombo := 0
 
-	// BANK: 811111111111119
-	// EXPECTED: 811111111119
-	// GOT: 81111111111
 	for i := currI + 1; i < bankSize; i++ {
 		comboVal := getHighestCombo(bank, i, combo, bankSize)
 		if comboVal > highestCombo {
