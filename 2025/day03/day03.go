@@ -55,7 +55,6 @@ func part1(path string) int {
 
 func getHighestStarts(bank []int) (int, []int) {
 	highestStart, matchedIs := 0, []int{}
-	fmt.Println(bank)
 	for i := 0; i < len(bank)-12; i++ {
 		val := bank[i]
 
@@ -70,34 +69,43 @@ func getHighestStarts(bank []int) (int, []int) {
 	return highestStart, matchedIs
 }
 
-func getHighestCombo(bank []int, currI int, currCombo []int, bankSize int) int {
-	combo := append(currCombo, bank[currI])
-	if len(combo) == 12 {
-		res, err := go_utils.CombineSimpleInts(combo)
-
-		if err != nil {
-			log.Fatalf("Invalid combo (%d) %s", currCombo, err)
-		}
-
-		return res
+func getComboVal(bank []int, currI int, remaining int, known map[string]int) int {
+	if remaining == 1 {
+		return bank[currI]
 	}
 
-	// Size guard, if we need more numbers than we have left, lets just leave it
-	remaining := 12 - len(combo)
-	if remaining > (bankSize - currI) {
-		return -1
+	mapKey := fmt.Sprintf("%d|%d", currI, remaining)
+	if val, ok := known[mapKey]; ok {
+		return val
 	}
 
-	highestCombo := 0
+	highestVal := 0
+	for next := currI + 1; next <= len(bank)-(remaining-1); next++ {
+		val := getComboVal(bank, next, remaining-1, known)
+		comboValStr := fmt.Sprintf("%d%d", bank[currI], val)
+		comboVal, _ := strconv.Atoi(comboValStr)
 
-	for i := currI + 1; i < bankSize; i++ {
-		comboVal := getHighestCombo(bank, i, combo, bankSize)
-		if comboVal > highestCombo {
-			highestCombo = comboVal
+		if comboVal > highestVal {
+			highestVal = comboVal
 		}
 	}
 
-	return highestCombo
+	known[mapKey] = highestVal
+	return highestVal
+}
+
+func getHighestCombo(bank []int, startI int) int {
+	highest := 0
+	known := make(map[string]int)
+
+	for i := startI; i <= len(bank)-12; i++ {
+		val := getComboVal(bank, i, 12, known)
+		if val > highest {
+			highest = val
+		}
+	}
+
+	return highest
 }
 
 func part2(path string) int {
@@ -115,18 +123,17 @@ func part2(path string) int {
 
 	for _, bankStr := range banks {
 		bank := go_utils.StringAsNumArray(bankStr)
-		highestStart, matchedIs := getHighestStarts(bank)
+		_, matchedIs := getHighestStarts(bank)
 
 		highestCombo := 0
 
 		for _, matchedI := range matchedIs {
-			combo := getHighestCombo(bank, matchedI, []int{}, len(bank))
+			combo := getHighestCombo(bank, matchedI)
 			if combo > highestCombo {
 				highestCombo = combo
 			}
 		}
 
-		fmt.Printf("Highest: %d | Indexes: %v | Highest combo: %d\n", highestStart, matchedIs, highestCombo)
 		result += highestCombo
 	}
 
