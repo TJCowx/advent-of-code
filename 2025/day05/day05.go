@@ -4,6 +4,7 @@ import (
 	"advent-of-code/go_utils"
 	"fmt"
 	"log"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -81,13 +82,43 @@ func part1(path string) int {
 	return result
 }
 
+func combineOverlap(ranges []freshRange) []freshRange {
+	combined := []freshRange{ranges[0]}
+	for _, curr := range ranges[1:] {
+		prev := &combined[len(combined)-1]
+
+		if curr.min <= prev.max {
+			if curr.max > prev.max {
+				prev.max = curr.max
+			}
+
+		} else {
+			combined = append(combined, curr)
+		}
+	}
+
+	return combined
+}
+
 func part2(path string) int {
 	fmt.Println("Day 05, Part 2: START")
 	result := 0
 
 	timer := go_utils.Timer{}
 
+	freshRanges, _ := parseInput(path)
+
 	timer.Start()
+
+	sort.Slice(freshRanges, func(i, j int) bool {
+		return freshRanges[i].min < freshRanges[j].min
+	})
+
+	combined := combineOverlap(freshRanges)
+
+	for _, rng := range combined {
+		result += (rng.max - rng.min) + 1
+	}
 
 	timer.End()
 
