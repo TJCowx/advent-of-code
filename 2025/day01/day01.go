@@ -42,38 +42,44 @@ func solve(path string, timer *go_utils.Timer, countPasses bool) int {
 		direction := instruction[:1]
 		distance, err := strconv.Atoi(instruction[1:])
 
-		startedZero := dial == 0
-
 		if err != nil {
 			log.Fatalf("Error parsing input, %s", err)
 		}
 
+		movement := distance
 		if direction == "L" {
-			dial -= distance
-		} else {
-			dial += distance
+			movement = -distance
 		}
+
+		oldDial := dial
+
+		dial += movement
 
 		passes := 0
-		if countPasses && (dial > 100 || dial < -100) {
-			passes = int(math.Floor(math.Abs(float64(dial)) / 100.0))
-		}
 
-		if dial >= 100 {
-			dial = normalize(dial)
-		} else if dial < 0 {
-			dial = ((dial % 100) + 100) % 100
-			if passes == 0 && !startedZero {
+		if countPasses {
+			// Get the number of passes (counts for maginitudes, eg +100 does not count for smaller go over)
+			passes = int(math.Abs(float64(dial)) / 100)
+			leftover := int(float64(movement)) % 100
+
+			// Handle smaller increments (14 -> -3)
+			if oldDial > 0 && oldDial+leftover < 0 {
+				passes += 1
+			} else if oldDial < 0 && oldDial+leftover > 0 {
 				passes += 1
 			}
 		}
 
-		if dial == 0 {
+		// Normalize it so we can play with it after
+		dial = ((dial % 100) + 100) % 100
+
+		if passes > 0 {
+			result += passes
+		} else if dial == 0 {
 			result += 1
 		}
-		result += passes
 
-		fmt.Printf("%s | Pos %d | Result: %d (Started Zero: %v) | Passes: %d\n", instruction, dial, result, startedZero, passes)
+		fmt.Printf("INSTRUCTION: %s | START: %d | MOVE: %d | FINISH: %d | PASSES: %d | RESULT: %d\n", instruction, oldDial, movement, dial, passes, result)
 
 	}
 
