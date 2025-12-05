@@ -24,7 +24,7 @@ func (g *grid) doesPointHaveRoll(p image.Point) bool {
 }
 
 func (g *grid) removeVisited() {
-	for point, _ := range g.visited {
+	for point := range g.visited {
 		g.positions[point.Y][point.X] = "."
 	}
 
