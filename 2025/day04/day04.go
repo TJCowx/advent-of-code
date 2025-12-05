@@ -11,6 +11,7 @@ import (
 
 type grid struct {
 	positions [][]string
+	visited   map[image.Point]bool
 	bounds    image.Rectangle
 }
 
@@ -20,6 +21,14 @@ func (g *grid) isInBounds(p image.Point) bool {
 
 func (g *grid) doesPointHaveRoll(p image.Point) bool {
 	return g.isInBounds(p) && g.positions[p.Y][p.X] == "@"
+}
+
+func (g *grid) removeVisited() {
+	for point, _ := range g.visited {
+		g.positions[point.Y][point.X] = "."
+	}
+
+	g.visited = make(map[image.Point]bool)
 }
 
 func (g *grid) adjRollCount(p image.Point) int {
@@ -80,6 +89,7 @@ func parseInput(rows []string) grid {
 
 	return grid{
 		positions: positions,
+		visited:   make(map[image.Point]bool),
 		bounds:    image.Rect(0, 0, len(positions[0]), len(positions)),
 	}
 }
@@ -101,6 +111,8 @@ func part1(path string) int {
 
 	g := parseInput(rows)
 
+	timer.Start()
+
 	for y, row := range g.positions {
 		for x, val := range row {
 			if val == "@" {
@@ -114,8 +126,6 @@ func part1(path string) int {
 		}
 	}
 
-	timer.Start()
-
 	timer.End()
 
 	fmt.Printf("day 04, part 1 result: %d | %s\n", result, timer.TimeLapsed())
@@ -128,7 +138,41 @@ func part2(path string) int {
 
 	timer := go_utils.Timer{}
 
+	rows, err := go_utils.ReadIntoStrArr(path)
+
+	if err != nil {
+		log.Fatalf("Error parsing input: %s", err)
+	}
+
+	g := parseInput(rows)
+
 	timer.Start()
+
+	for true {
+		removedRolls := 0
+
+		for y, row := range g.positions {
+			for x, val := range row {
+				if val == "@" {
+					p := image.Point{X: x, Y: y}
+					adjRollRound := g.adjRollCount(p)
+
+					if adjRollRound < 4 {
+						g.visited[p] = true
+						removedRolls += 1
+					}
+				}
+
+			}
+		}
+
+		g.removeVisited()
+
+		if removedRolls == 0 {
+			break
+		}
+		result += removedRolls
+	}
 
 	timer.End()
 	fmt.Printf("day 04, part 1 result: %d | %s\n", result, timer.TimeLapsed())
