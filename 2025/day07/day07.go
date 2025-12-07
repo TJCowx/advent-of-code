@@ -3,6 +3,7 @@ package day07
 import (
 	"advent-of-code/go_utils"
 	"fmt"
+	"image"
 	"log"
 	"strings"
 )
@@ -52,13 +53,51 @@ func part1(path string) int {
 	return result
 }
 
+func solveBeam(beam int, y int, rows []string, visited map[image.Point]int) int {
+	// We made it to the end, count the path
+	if y == len(rows)-1 {
+		return 1
+	}
+
+	pnt := image.Pt(beam, y)
+
+	if val, ok := visited[pnt]; ok {
+		return val
+	}
+
+	result := 0
+	if rows[y][beam] == '^' {
+		left := solveBeam(beam-1, y+1, rows, visited)
+		right := solveBeam(beam+1, y+1, rows, visited)
+		result = left + right
+	} else {
+		result = solveBeam(beam, y+1, rows, visited)
+	}
+
+	visited[pnt] = result
+	return result
+}
+
 func part2(path string) int {
 	fmt.Println("Day 07, Part 2: START")
 	result := 0
 
 	timer := go_utils.Timer{}
 
+	rows, err := go_utils.ReadIntoStrArr(path)
+
+	if err != nil {
+		log.Fatalf("Error reading input: %s", err)
+	}
+
 	timer.Start()
+
+	// get start pos which is directly under the "S"
+	startX := strings.Index(rows[0], "S")
+	// Used to memoize how many paths the splitter gives
+	visited := map[image.Point]int{}
+
+	result = solveBeam(startX, 1, rows, visited)
 
 	timer.End()
 
