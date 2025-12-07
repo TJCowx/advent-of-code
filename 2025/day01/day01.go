@@ -4,7 +4,6 @@ import (
 	"advent-of-code/go_utils"
 	"fmt"
 	"log"
-	"math"
 	"strconv"
 )
 
@@ -26,7 +25,7 @@ func normalize(n int) int {
 	return n
 }
 
-func solve(path string, timer *go_utils.Timer, countPasses bool) int {
+func solveP1(path string, timer *go_utils.Timer) int {
 	intructions, err := go_utils.ReadIntoStrArr(path)
 
 	if err != nil {
@@ -51,35 +50,16 @@ func solve(path string, timer *go_utils.Timer, countPasses bool) int {
 			movement = -distance
 		}
 
-		oldDial := dial
-
 		dial += movement
-
-		passes := 0
-
-		if countPasses {
-			// Get the number of passes (counts for maginitudes, eg +100 does not count for smaller go over)
-			passes = int(math.Abs(float64(dial)) / 100)
-			leftover := int(float64(movement)) % 100
-
-			// Handle smaller increments (14 -> -3)
-			if oldDial > 0 && oldDial+leftover < 0 {
-				passes += 1
-			} else if oldDial < 0 && oldDial+leftover > 0 {
-				passes += 1
-			}
-		}
 
 		// Normalize it so we can play with it after
 		dial = ((dial % 100) + 100) % 100
 
-		if passes > 0 {
-			result += passes
-		} else if dial == 0 {
+		if dial == 0 {
 			result += 1
 		}
 
-		fmt.Printf("INSTRUCTION: %s | START: %d | MOVE: %d | FINISH: %d | PASSES: %d | RESULT: %d\n", instruction, oldDial, movement, dial, passes, result)
+		// fmt.Printf("INSTRUCTION: %s | START: %d | MOVE: %d | FINISH: %d | RESULT: %d\n", instruction, oldDial, movement, dial, result)
 
 	}
 
@@ -92,7 +72,7 @@ func part1(path string) int {
 	fmt.Println("Day 01, Part 1: START")
 	timer := go_utils.Timer{}
 
-	result := solve(path, &timer, false)
+	result := solveP1(path, &timer)
 
 	fmt.Printf("Day 01, Part 1 Result: %d | %s\n", result, timer.TimeLapsed())
 
@@ -103,8 +83,9 @@ func part2(path string) int {
 	fmt.Println("Day 01, Part 2: START")
 
 	timer := go_utils.Timer{}
+	result := 0
 
-	result := solve(path, &timer, true)
+	// result := solve(path, &timer)
 
 	fmt.Printf("Day 01, Part 2 Result: %d | %s\n", result, timer.TimeLapsed())
 
