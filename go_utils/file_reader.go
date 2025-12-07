@@ -2,6 +2,7 @@ package go_utils
 
 import (
 	"bufio"
+	"errors"
 	"os"
 	"strings"
 )
@@ -42,6 +43,10 @@ func ReadIntoStrArr(path string) ([]string, error) {
 	lines := strings.Split(content, "\n")
 	if len(lines) > 0 && lines[len(lines)-1] == "" {
 		lines = lines[:len(lines)-1]
+	}
+
+	if len(lines) == 0 {
+		return []string{}, errors.New("You forgot to add the input dummy")
 	}
 
 	return lines, err
