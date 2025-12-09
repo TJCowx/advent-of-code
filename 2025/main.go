@@ -8,6 +8,7 @@ import (
 	"advent-of-code/2025/day05"
 	"advent-of-code/2025/day06"
 	"advent-of-code/2025/day07"
+	"advent-of-code/2025/day08"
 	"advent-of-code/go_utils"
 	"fmt"
 	"log"
@@ -28,6 +29,7 @@ func main() {
 		"5": day05.Run,
 		"6": day06.Run,
 		"7": day07.Run,
+		"8": day08.Run,
 	}
 
 	if runFunc, exists := dayFuncs[input.Day]; exists {
