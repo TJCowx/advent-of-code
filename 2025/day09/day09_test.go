@@ -15,7 +15,7 @@ func TestPart1(t *testing.T) {
 
 func TestPart2(t *testing.T) {
 	got := part2(TEST_PATH)
-	expected := 14
+	expected := 24
 
 	if got != expected {
 		t.Errorf("Got %d, expected %d", got, expected)
