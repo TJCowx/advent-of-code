@@ -10,6 +10,7 @@ import (
 	"advent-of-code/2025/day07"
 	"advent-of-code/2025/day08"
 	"advent-of-code/2025/day09"
+	"advent-of-code/2025/day10"
 	"advent-of-code/go_utils"
 	"fmt"
 	"log"
@@ -23,15 +24,16 @@ func main() {
 	}
 
 	dayFuncs := map[string]func(*string){
-		"1": day01.Run,
-		"2": day02.Run,
-		"3": day03.Run,
-		"4": day04.Run,
-		"5": day05.Run,
-		"6": day06.Run,
-		"7": day07.Run,
-		"8": day08.Run,
-		"9": day09.Run,
+		"1":  day01.Run,
+		"2":  day02.Run,
+		"3":  day03.Run,
+		"4":  day04.Run,
+		"5":  day05.Run,
+		"6":  day06.Run,
+		"7":  day07.Run,
+		"8":  day08.Run,
+		"9":  day09.Run,
+		"10": day10.Run,
 	}
 
 	if runFunc, exists := dayFuncs[input.Day]; exists {
