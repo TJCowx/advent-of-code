@@ -4,6 +4,7 @@ import (
 	"advent-of-code/go_utils"
 	"fmt"
 	"log"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -16,7 +17,7 @@ func Run(part *string) {
 }
 
 type machine struct {
-	indicatorLights     []bool
+	indicatorGoal       []bool
 	buttons             [][]int
 	joltageRequirements []int
 }
@@ -35,7 +36,7 @@ func parseInput(path string) []machine {
 		var m machine
 		matches := re.FindStringSubmatch(line)
 		for _, r := range matches[1] {
-			m.indicatorLights = append(m.indicatorLights, r == '#')
+			m.indicatorGoal = append(m.indicatorGoal, r == '#')
 		}
 
 		wiringGroups := strings.Fields(matches[2])
@@ -67,15 +68,129 @@ func parseInput(path string) []machine {
 	return machines
 }
 
+func printIndicators(indicators []bool) string {
+	out := ""
+	for _, val := range indicators {
+		if val {
+			out += "#"
+		} else {
+			out += "."
+		}
+	}
+	return out
+}
+
+func printBtnGrouping(grouping []int) string {
+	out := ""
+
+	for _, val := range grouping {
+		if len(out) != 0 {
+			out += ","
+		}
+		out += strconv.Itoa(val)
+	}
+
+	return out
+}
+
+func (m *machine) doIndicatorsMatch(testIndicators []bool) bool {
+	for i, val := range testIndicators {
+		if val != m.indicatorGoal[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func blinkIndicators(curr []bool, flipIs []int) []bool {
+	cp := make([]bool, len(curr))
+	copy(cp, curr)
+	for _, i := range flipIs {
+		cp[i] = !cp[i]
+	}
+
+	return cp
+}
+
+// Iterative DFS to find the shortest path
+func (m *machine) getFastestIndicatorMatch() int {
+	type node struct {
+		prev       []int
+		btns       []int
+		pattern    []bool
+		numPresses int
+	}
+
+	// Initiate all values on the stack
+	queue := []node{}
+	visited := make(map[string]bool)
+	offIndicators := make([]bool, len(m.indicatorGoal))
+	for _, val := range m.buttons {
+		queue = append(queue, node{
+			btns:       val,
+			pattern:    offIndicators,
+			numPresses: 0,
+		})
+	}
+
+	res := math.MaxInt
+
+	fmt.Println(queue)
+
+	for len(queue) > 0 {
+		newQueue, curr, err := go_utils.Pop(queue)
+		if err != nil {
+			log.Fatalf("Error popping from queue: %s", err)
+		}
+
+		queue = newQueue
+
+		if go_utils.AreSlicesEqual(m.indicatorGoal, curr.pattern) && curr.numPresses < res {
+			res = curr.numPresses
+		}
+
+		for _, next := range m.buttons {
+			blinked := blinkIndicators(curr.pattern, next)
+
+			key := fmt.Sprintf("%s|%s", printBtnGrouping(curr.btns), printIndicators(blinked))
+			if visited[key] {
+				continue
+			}
+
+			visited[key] = true
+
+			queue = append(queue, node{
+				btns:       next,
+				pattern:    blinked,
+				numPresses: curr.numPresses + 1,
+				prev:       curr.btns,
+			})
+		}
+
+	}
+
+	return res
+}
+
 func part1(path string) int {
 	fmt.Println("Day 10, Part 1: START")
-	result := 0
 	timer := go_utils.Timer{}
+	result := 0
 
 	machines := parseInput(path)
 
-	fmt.Println(machines)
 	timer.Start()
+
+	for i, m := range machines {
+		minSteps := m.getFastestIndicatorMatch()
+		fmt.Printf("Machine %d = %d\n", i, minSteps)
+		if minSteps < 0 {
+			log.Fatalf("Have negative steps!")
+		}
+
+		result += minSteps
+	}
 
 	timer.End()
 
