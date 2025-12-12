@@ -116,7 +116,7 @@ func blinkIndicators(curr []bool, flipIs []int) []bool {
 // Iterative DFS to find the shortest path
 func (m *machine) getFastestIndicatorMatch() int {
 	type node struct {
-		prev       []int
+		prev       [][]int
 		btns       []int
 		pattern    []bool
 		numPresses int
@@ -129,14 +129,12 @@ func (m *machine) getFastestIndicatorMatch() int {
 	for _, val := range m.buttons {
 		queue = append(queue, node{
 			btns:       val,
-			pattern:    offIndicators,
-			numPresses: 0,
+			pattern:    blinkIndicators(offIndicators, val),
+			numPresses: 1,
 		})
 	}
 
 	res := math.MaxInt
-
-	fmt.Println(queue)
 
 	for len(queue) > 0 {
 		newQueue, curr, err := go_utils.Pop(queue)
@@ -146,14 +144,17 @@ func (m *machine) getFastestIndicatorMatch() int {
 
 		queue = newQueue
 
-		if go_utils.AreSlicesEqual(m.indicatorGoal, curr.pattern) && curr.numPresses < res {
-			res = curr.numPresses
-		}
-
 		for _, next := range m.buttons {
 			blinked := blinkIndicators(curr.pattern, next)
 
+			numPresses := curr.numPresses + 1
+
 			key := fmt.Sprintf("%s|%s", printBtnGrouping(curr.btns), printIndicators(blinked))
+
+			if go_utils.AreSlicesEqual(m.indicatorGoal, blinked) && numPresses < res {
+				res = numPresses
+			}
+
 			if visited[key] {
 				continue
 			}
@@ -161,10 +162,10 @@ func (m *machine) getFastestIndicatorMatch() int {
 			visited[key] = true
 
 			queue = append(queue, node{
-				btns:       next,
-				pattern:    blinked,
-				numPresses: curr.numPresses + 1,
-				prev:       curr.btns,
+				btns:       go_utils.CopySlice(next),
+				pattern:    go_utils.CopySlice(blinked),
+				numPresses: numPresses,
+				prev:       append(curr.prev, curr.btns),
 			})
 		}
 
@@ -173,6 +174,8 @@ func (m *machine) getFastestIndicatorMatch() int {
 	return res
 }
 
+// Incorrect
+// 1272 too high
 func part1(path string) int {
 	fmt.Println("Day 10, Part 1: START")
 	timer := go_utils.Timer{}
@@ -182,9 +185,8 @@ func part1(path string) int {
 
 	timer.Start()
 
-	for i, m := range machines {
+	for _, m := range machines {
 		minSteps := m.getFastestIndicatorMatch()
-		fmt.Printf("Machine %d = %d\n", i, minSteps)
 		if minSteps < 0 {
 			log.Fatalf("Have negative steps!")
 		}

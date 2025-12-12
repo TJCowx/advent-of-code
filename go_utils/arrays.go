@@ -37,3 +37,11 @@ func AreSlicesEqual[T string | int | bool](s1 []T, s2 []T) bool {
 	}
 	return true
 }
+
+func CopySlice[T string | int | bool](s []T) []T {
+	c := make([]T, len(s))
+
+	copy(c, s)
+
+	return c
+}
