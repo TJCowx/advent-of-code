@@ -15,3 +15,12 @@ func SetMapValue[K1 comparable, K2 comparable, V any](m map[K1]map[K2]V, k1 K1, 
 	}
 	m[k1][k2] = val
 }
+
+func CopyMap[K comparable, V any](m map[K]V) map[K]V {
+	targetMap := make(map[K]V)
+	for key, val := range m {
+		targetMap[key] = val
+	}
+
+	return targetMap
+}

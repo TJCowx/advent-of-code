@@ -34,15 +34,17 @@ func parseInput(path string) map[string][]string {
 	return nodeMap
 }
 
-func countPaths(nodeMap map[string][]string) int {
+func countPaths(nodeMap map[string][]string, start string) int {
 	type item struct {
 		val       string
 		processed bool
+		hitFFT    bool
+		hitDAC    bool
 	}
 
 	visited := make(map[string]int)
 
-	stack := []item{{val: "you", processed: false}}
+	stack := []item{{val: start, processed: false, hitFFT: false, hitDAC: false}}
 
 	for len(stack) > 0 {
 		remaining, node, err := go_utils.Pop(stack)
@@ -57,25 +59,116 @@ func countPaths(nodeMap map[string][]string) int {
 			for _, child := range nodeMap[node.val] {
 				sum += visited[child]
 			}
-
 			if node.val == "out" {
 				sum++
 			}
 
 			visited[node.val] = sum
 		} else {
-			stack = append(stack, item{val: node.val, processed: true})
+			stack = append(stack, item{
+				val:       node.val,
+				processed: true,
+			})
 
 			for _, child := range nodeMap[node.val] {
 				if _, ok := visited[child]; !ok {
-					stack = append(stack, item{val: child, processed: false})
+
+					stack = append(stack, item{
+						val:       child,
+						processed: false,
+					})
 				}
 			}
 		}
 
 	}
 
-	return visited["you"]
+	return visited[start]
+}
+
+func countPathsP2(nodeMap map[string][]string, start string) int {
+	type item struct {
+		val       string
+		processed bool
+		hitFFT    bool
+		hitDAC    bool
+	}
+
+	count := 0
+	visited := make(map[string]map[int]int)
+
+	stack := []item{{val: start, processed: false, hitFFT: false, hitDAC: false}}
+
+	for len(stack) > 0 {
+		remaining, node, err := go_utils.Pop(stack)
+		stack = remaining
+
+		if err != nil {
+			log.Fatal("Failed at popping stack", err)
+		}
+
+		if node.val == "fft" {
+			node.hitFFT = true
+		} else if node.val == "dac" {
+			node.hitDAC = true
+		}
+
+		flags := 0
+		if node.hitFFT {
+			flags |= 1
+		}
+		if node.hitDAC {
+			flags |= 2
+		}
+
+		if visited[node.val] == nil {
+			visited[node.val] = make(map[int]int)
+		}
+
+		if _, ok := visited[node.val][flags]; ok {
+			continue
+		}
+
+		if node.processed {
+			sum := 0
+			for _, child := range nodeMap[node.val] {
+				sum += visited[child][flags]
+			}
+
+			if node.hitFFT && node.hitDAC {
+				sum++
+			} else if node.val == "out" {
+				sum++
+			}
+
+			visited[node.val][flags] = sum
+			count += sum
+		} else {
+			stack = append(stack, item{
+				val:       node.val,
+				processed: true,
+				hitFFT:    node.hitFFT,
+				hitDAC:    node.hitDAC,
+			})
+
+			for _, child := range nodeMap[node.val] {
+				if _, ok := visited[child]; !ok {
+
+					stack = append(stack, item{
+						val:       child,
+						processed: false,
+						hitFFT:    node.hitFFT,
+						hitDAC:    node.hitDAC,
+					})
+				}
+			}
+		}
+
+	}
+
+	fmt.Println(visited[start][0])
+
+	return count
 }
 
 func part1(path string) int {
@@ -86,7 +179,7 @@ func part1(path string) int {
 
 	timer.Start()
 
-	result := countPaths(nodeMap)
+	result := countPaths(nodeMap, "you")
 
 	timer.End()
 
@@ -96,11 +189,13 @@ func part1(path string) int {
 
 func part2(path string) int {
 	fmt.Println("Day 11, Part 2: START")
-	result := 0
-
 	timer := go_utils.Timer{}
 
+	nodeMap := parseInput(path)
+
 	timer.Start()
+
+	result := countPathsP2(nodeMap, "svr")
 
 	timer.End()
 
