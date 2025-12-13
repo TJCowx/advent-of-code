@@ -86,165 +86,67 @@ func countPaths(nodeMap map[string][]string, start string) int {
 	return visited[start]
 }
 
-func countPathsP2(nodeMap map[string][]string, start string) int {
-	type item struct {
-		val       string
-		processed bool
-		hitFFT    bool
-		hitDAC    bool
-		path      []string
-		acc       int
-	}
+const (
+	FlagFFT = 1 << iota
+	FlagDAC
+)
 
-	count := 0
-	visited := make(map[string]map[int]int)
-
-	stack := []item{{
-		val:       start,
-		processed: false,
-		hitFFT:    false,
-		hitDAC:    false,
-		path:      []string{},
-		acc:       0,
-	}}
-
-	for len(stack) > 0 {
-		remaining, node, err := go_utils.Pop(stack)
-		stack = remaining
-
-		if err != nil {
-			log.Fatal("Failed at popping stack", err)
-		}
-
-		if node.val == "fft" {
-			node.hitFFT = true
-		} else if node.val == "dac" {
-			node.hitDAC = true
-		}
-
-		flags := 0
-		if node.hitFFT {
-			flags |= 1
-		}
-		if node.hitDAC {
-			flags |= 2
-		}
-
-		if visited[node.val] == nil {
-			visited[node.val] = make(map[int]int)
-		}
-
-		if !node.processed {
-			if val, ok := visited[node.val][flags]; ok {
-				if len(stack) > 0 {
-					stack[len(stack)-1].acc += val
-				} else {
-					count += val
-				}
-				continue
-			}
-			stack = append(stack, item{
-				val:       node.val,
-				processed: true,
-				hitFFT:    node.hitFFT,
-				hitDAC:    node.hitDAC,
-				path:      node.path,
-				acc:       0,
-			})
-
-			for _, child := range nodeMap[node.val] {
-				stack = append(stack, item{
-					val:       child,
-					processed: false,
-					hitFFT:    node.hitFFT,
-					hitDAC:    node.hitDAC,
-					acc:       0,
-				})
-			}
-			continue
-		}
-
-		sum := node.acc
-
-		if node.val == "out" && node.hitFFT && node.hitDAC {
-			sum++
-			fmt.Println("HIT", sum)
-		}
-
-		visited[node.val][flags] = sum
-		if len(stack) > 0 {
-			fmt.Println("LEN ADDED WITH NO LENGTH", sum, node.val)
-			stack[0].acc += sum
-		} else {
-			fmt.Println("SUM ADDED", sum, node.val)
-			count += sum
-		}
-	}
-
-	// fmt.Println(visited[start][0])
-
-	return count
+type recursiveNode struct {
+	val      string
+	children []string
+	path     []string
+	flags    int
 }
 
-func pathsP2(nodes map[string][]string) int {
-	type nodeItem struct {
-		val    string
-		hitFFT bool
-		hitDAC bool
-		path   []string
-	}
-	res := 0
+func (n *recursiveNode) buildKey() string {
+	key := fmt.Sprintf("%s|%d", n.val, n.flags)
 
-	root := nodeItem{
-		val:    "svr",
-		hitDAC: false,
-		hitFFT: false,
-		path:   []string{},
-	}
+	return key
+}
 
-	stack := []nodeItem{root}
+// 290219757077250
+func p2Recursive(nodeMap map[string][]string, currNode recursiveNode, visited map[string]int) int {
+	sum := 0
 
-	for len(stack) > 0 {
-		node := stack[len(stack)-1]
-		stack = stack[:len(stack)-1]
+	key := currNode.buildKey()
 
-		// fmt.Println(node.val)
-
-		if node.val == "out" {
-			if node.hitDAC && node.hitFFT {
-				fmt.Println(node.path)
-				res++
-			}
-			continue
-		}
-		if node.val == "fft" {
-			node.hitFFT = true
-		}
-		if node.val == "dac" {
-			node.hitDAC = true
-		}
-
-		flags := 0
-		if node.hitFFT {
-			flags |= 1
-		}
-		if node.hitDAC {
-			flags |= 2
-		}
-
-		children := nodes[node.val]
-		for _, child := range children {
-			n := nodeItem{
-				val:    child,
-				hitFFT: node.hitFFT,
-				hitDAC: node.hitDAC,
-				path:   append(node.path, node.val),
-			}
-			stack = append(stack, n)
-		}
+	if val, ok := visited[key]; ok {
+		return val
 	}
 
-	return res
+	if currNode.children[0] == "out" {
+		res := 0
+		if currNode.flags&(FlagFFT|FlagDAC) == (FlagFFT | FlagDAC) {
+			res = 1
+		}
+
+		visited[key] = res
+
+		return res
+	}
+
+	for _, child := range currNode.children {
+		flags := currNode.flags
+		if currNode.val == "fft" {
+			flags |= FlagFFT
+		}
+		if currNode.val == "dac" {
+			flags |= FlagDAC
+		}
+
+		childNode := recursiveNode{
+			val:      child,
+			children: nodeMap[child],
+			path:     append(currNode.path, currNode.val),
+			flags:    flags,
+		}
+
+		sum += p2Recursive(nodeMap, childNode, visited)
+	}
+
+	visited[key] = sum
+
+	return sum
 }
 
 func part1(path string) int {
@@ -263,9 +165,6 @@ func part1(path string) int {
 	return result
 }
 
-// Incorrect
-// 26
-// 51
 func part2(path string) int {
 	fmt.Println("Day 11, Part 2: START")
 	timer := go_utils.Timer{}
@@ -274,7 +173,15 @@ func part2(path string) int {
 
 	timer.Start()
 
-	result := pathsP2(nodeMap)
+	root := recursiveNode{
+		val:      "svr",
+		children: nodeMap["svr"],
+		path:     []string{},
+	}
+
+	visited := make(map[string]int)
+
+	result := p2Recursive(nodeMap, root, visited)
 
 	timer.End()
 
