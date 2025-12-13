@@ -205,11 +205,66 @@ func part2(path string) int {
 
 	timer := go_utils.Timer{}
 
+	boxes := getJunctionBoxes(path)
+
 	timer.Start()
 
+	distances := getDistances(boxes)
+
+	// What circuit the junctionbox is connected to
+	circuits := make(map[int][]junctionBox)
+	visited := make(map[junctionBox]int)
+	nextCircuit := 0
+	targetCount := len(boxes)
+	var lastValStart junctionBox
+	var lastValEnd junctionBox
+
+	for _, d := range distances {
+		aCircuit, aVisited := visited[d.PointA]
+		bCircuit, bVisited := visited[d.PointB]
+
+		if aVisited && bVisited {
+			if aCircuit != bCircuit {
+				// Merge the circuits
+				circuits[aCircuit] = append(circuits[aCircuit], circuits[bCircuit]...)
+				for _, box := range circuits[bCircuit] {
+					visited[box] = aCircuit
+				}
+
+				delete(circuits, bCircuit)
+			}
+		} else if aVisited {
+			circuits[aCircuit] = append(circuits[aCircuit], d.PointB)
+			visited[d.PointB] = aCircuit
+		} else if bVisited {
+			circuits[bCircuit] = append(circuits[bCircuit], d.PointA)
+			visited[d.PointA] = bCircuit
+		} else {
+			circuits[nextCircuit] = []junctionBox{d.PointA, d.PointB}
+			visited[d.PointA] = nextCircuit
+			visited[d.PointB] = nextCircuit
+
+			nextCircuit++
+		}
+
+		if len(circuits) == 1 {
+			var key int
+			for k := range circuits {
+				key = k
+			}
+
+			if len(circuits[key]) >= targetCount {
+				lastValStart = d.PointA
+				lastValEnd = d.PointB
+				break
+			}
+		}
+	}
+
+	result = lastValStart.X * lastValEnd.X
 	timer.End()
 
-	fmt.Printf("day 08, part 1 result: %d | %s\n", result, timer.TimeLapsed())
+	fmt.Printf("day 08, part 2 result: %d | %s\n", result, timer.TimeLapsed())
 
 	return result
 }
