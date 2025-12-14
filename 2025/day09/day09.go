@@ -180,53 +180,7 @@ func part1(path string) int {
 type grid struct {
 	gridPoints             map[image.Point]rune
 	minY, maxY, minX, maxX int
-	edgesForY              [][]edge
-}
-
-func (g *grid) fillGrid() {
-	for y := g.minY; y <= g.maxY; y++ {
-		var buf []int
-		rowEdges := g.edgesForY[y-g.minY]
-
-		for _, e := range rowEdges {
-			xf := e.start.X + (y-e.start.Y)*(e.end.X-e.start.X)/(e.end.Y-e.start.Y)
-			buf = append(buf, xf)
-		}
-
-		sort.Ints(buf)
-
-		for i := 0; i < len(buf)-1; i += 2 {
-			x0 := buf[i]
-			x1 := buf[i+1]
-			for x := x0; x <= x1; x++ {
-				g.gridPoints[image.Pt(x, y)] = '1'
-			}
-		}
-	}
-
-	// for y := g.minY; y <= g.maxY; y++ {
-	// 	isInPolygon := false
-	//
-	// 	for x := g.minX; x <= g.maxX; x++ {
-	// 		pt := image.Pt(x, y)
-	// 		nextPt := image.Pt(x+1, y)
-	// 		prevPt := image.Pt(x-1, y)
-	// 		if g.gridPoints[pt] == '#' {
-	// 			// If one of them is it we don't flip?
-	// 			if g.gridPoints[nextPt] == '#' || g.gridPoints[prevPt] == '#' {
-	// 				if !isInPolygon {
-	// 					isInPolygon = true
-	// 				}
-	// 			} else {
-	// 				isInPolygon = !isInPolygon
-	// 			}
-	// 		} else if isInPolygon {
-	// 			g.gridPoints[pt] = '1'
-	// 		} else {
-	// 			g.gridPoints[pt] = '.'
-	// 		}
-	// 	}
-	// }
+	edgesForY              map[int][]int
 }
 
 func (g *grid) buildOutline(points []image.Point) {
@@ -245,46 +199,40 @@ func (g *grid) buildOutline(points []image.Point) {
 		}
 	}
 
-	g.edgesForY = make([][]edge, g.maxY-g.minY+1)
-
-	// Fill the edges of the grid
 	for i := 0; i < len(points); i++ {
 		start := points[i]
 		end := points[(i+1)%len(points)]
-
 		g.gridPoints[start] = '#'
 		g.gridPoints[end] = '#'
 
-		if start.Y == end.Y {
-			continue
-		}
+		if start.X == end.X {
+			// Vertical, fill it vertically
+			lowY := min(start.Y, end.Y)
+			highY := max(start.Y, end.Y)
+			for y := lowY; y <= highY; y++ {
+				pt := image.Pt(start.X, y)
+				g.gridPoints[pt] = '#'
+				if g.edgesForY[y] == nil {
+					g.edgesForY[y] = make([]int, 0)
+				}
 
-		lowY := min(start.Y, end.Y)
-		highY := max(start.Y, end.Y)
+				g.edgesForY[y] = append(g.edgesForY[y], start.X)
+			}
 
-		for y := lowY; y <= highY; y++ {
-			g.edgesForY[y-g.minY] = append(g.edgesForY[y-g.minY], edge{start: start, end: end})
-		}
-	}
-}
+		} else {
+			lowX := min(start.X, end.X)
+			highX := max(start.X, end.X)
 
-func (g *grid) print() {
-	for y := 0; y <= g.maxY; y++ {
-		str := ""
-
-		for x := g.minX; x <= g.maxX; x++ {
-			pt := image.Pt(x, y)
-
-			if g.gridPoints[pt] == '#' {
-				str += "#"
-			} else if g.gridPoints[pt] == '1' {
-				str += "1"
-			} else {
-				str += "."
+			for x := lowX; x <= highX; x++ {
+				pt := image.Pt(x, start.Y)
+				g.gridPoints[pt] = '#'
 			}
 		}
+	}
 
-		fmt.Println(str)
+	// Just sort them
+	for k := range g.edgesForY {
+		sort.Ints(g.edgesForY[k])
 	}
 }
 
@@ -308,14 +256,14 @@ func (g *grid) isEdgeInPoly(rectEdge edge) bool {
 	return true
 }
 
+// Since the shape isn't in a U or n shape, or even more complicated this
+// works to see if it is just in between the points, too lazy to make it for
+// all edge cases
 func (g *grid) pointIsInPoly(pt image.Point) bool {
-	val, ok := g.gridPoints[pt]
+	startX := g.edgesForY[pt.Y][0]
+	endX := g.edgesForY[pt.Y][len(g.edgesForY[pt.Y])-1]
 
-	if !ok || val == '.' {
-		return false
-	}
-
-	return true
+	return pt.X >= startX && pt.X <= endX
 }
 
 func (g *grid) isRectInPoly(rect image.Rectangle) bool {
@@ -333,9 +281,8 @@ func (g *grid) isRectInPoly(rect image.Rectangle) bool {
 		}
 	}
 
+	// Looking at the shape, I don't have to worry abount U or n shapes or even more complicated
 	edges := []edge{
-		{start: image.Pt(rect.Min.X, rect.Min.Y), end: image.Pt(rect.Max.X, rect.Min.Y), horizontal: true},
-		{start: image.Pt(rect.Min.X, rect.Max.Y), end: image.Pt(rect.Max.X, rect.Max.Y), horizontal: true},
 		{start: image.Pt(rect.Min.X, rect.Min.Y), end: image.Pt(rect.Min.X, rect.Max.Y), horizontal: false},
 		{start: image.Pt(rect.Max.X, rect.Min.Y), end: image.Pt(rect.Max.X, rect.Max.Y), horizontal: false},
 	}
@@ -383,13 +330,10 @@ func part2(path string) int {
 		maxY:       0,
 		minX:       math.MaxInt,
 		maxX:       0,
+		edgesForY:  make(map[int][]int),
 	}
 
 	g.buildOutline(polygon)
-	fmt.Println("Built outline")
-	g.fillGrid()
-	fmt.Println("Filled grid")
-	g.print()
 
 	result := g.largestArea(polygon)
 
