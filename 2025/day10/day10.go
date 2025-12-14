@@ -113,69 +113,82 @@ func blinkIndicators(curr []bool, flipIs []int) []bool {
 	return cp
 }
 
-// Iterative DFS to find the shortest path
-func (m *machine) getFastestIndicatorMatch() int {
-	type node struct {
-		prev       [][]int
-		btns       []int
-		pattern    []bool
-		numPresses int
-	}
-
-	// Initiate all values on the stack
-	queue := []node{}
-	visited := make(map[string]bool)
-	offIndicators := make([]bool, len(m.indicatorGoal))
-	for _, val := range m.buttons {
-		queue = append(queue, node{
-			btns:       val,
-			pattern:    blinkIndicators(offIndicators, val),
-			numPresses: 1,
-		})
-	}
-
-	res := math.MaxInt
-
-	for len(queue) > 0 {
-		newQueue, curr, err := go_utils.Pop(queue)
-		if err != nil {
-			log.Fatalf("Error popping from queue: %s", err)
-		}
-
-		queue = newQueue
-
-		for _, next := range m.buttons {
-			blinked := blinkIndicators(curr.pattern, next)
-
-			numPresses := curr.numPresses + 1
-
-			key := fmt.Sprintf("%s|%s", printBtnGrouping(curr.btns), printIndicators(blinked))
-
-			if go_utils.AreSlicesEqual(m.indicatorGoal, blinked) && numPresses < res {
-				res = numPresses
-			}
-
-			if visited[key] {
-				continue
-			}
-
-			visited[key] = true
-
-			queue = append(queue, node{
-				btns:       go_utils.CopySlice(next),
-				pattern:    go_utils.CopySlice(blinked),
-				numPresses: numPresses,
-				prev:       append(curr.prev, curr.btns),
-			})
-		}
-
-	}
-
-	return res
+func getVisitedMapKey(btnsClicked []int, currPattern []bool) string {
+	return fmt.Sprintf("%s|%s", printBtnGrouping(btnsClicked), printIndicators(currPattern))
 }
 
-// Incorrect
-// 1272 too high
+func getFastestMatchRecursive(m machine, currPattern []bool, blinkCount int, visited map[string]int, fastest int) int {
+	// Disregard if the fastest is done before this
+	if blinkCount > fastest {
+		return math.MaxInt
+	}
+
+	if m.doIndicatorsMatch(currPattern) {
+		return blinkCount
+	}
+
+	fastestMatch := fastest
+	for _, btnGroup := range m.buttons {
+		key := getVisitedMapKey(btnGroup, currPattern)
+
+		if knownCount, ok := visited[key]; ok {
+			if blinkCount < fastestMatch && knownCount < fastest {
+				fastestMatch = (blinkCount + knownCount)
+			}
+			continue
+		}
+
+		blinked := blinkIndicators(currPattern, btnGroup)
+		keyBlinked := getVisitedMapKey(btnGroup, blinked)
+
+		visited[keyBlinked] = math.MaxInt
+		fastestIter := getFastestMatchRecursive(m, blinked, blinkCount+1, visited, fastestMatch)
+		visited[keyBlinked] = fastestIter
+
+		if fastestIter < fastestMatch {
+			fastestMatch = fastestIter
+		}
+	}
+
+	return fastestMatch
+}
+
+type state struct {
+	pattern []bool
+	count   int
+}
+
+func solveP1(m machine) int {
+	startState := state{
+		pattern: make([]bool, len(m.indicatorGoal)),
+		count:   0,
+	}
+
+	queue := []state{startState}
+	visited := map[string]bool{printIndicators(startState.pattern): true}
+
+	for len(queue) > 0 {
+		s := queue[0]
+		queue = queue[1:]
+
+		if m.doIndicatorsMatch(s.pattern) {
+			return s.count
+		}
+
+		for _, btn := range m.buttons {
+			next := blinkIndicators(s.pattern, btn)
+			key := printIndicators(next)
+
+			if !visited[key] {
+				visited[key] = true
+				queue = append(queue, state{next, s.count + 1})
+			}
+		}
+	}
+
+	return math.MaxInt
+}
+
 func part1(path string) int {
 	fmt.Println("Day 10, Part 1: START")
 	timer := go_utils.Timer{}
@@ -186,9 +199,9 @@ func part1(path string) int {
 	timer.Start()
 
 	for _, m := range machines {
-		minSteps := m.getFastestIndicatorMatch()
+		minSteps := solveP1(m)
 		if minSteps < 0 {
-			log.Fatalf("Have negative steps!")
+			log.Fatalf("Have negative steps! %d", minSteps)
 		}
 
 		result += minSteps
