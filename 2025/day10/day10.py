@@ -1,3 +1,6 @@
+# No clue why I can't reproduce this in golang without it being wrong
+# I give up and will just use the pyton version
+
 import collections, functools, itertools
 
 
