@@ -1,6 +1,10 @@
 package go_utils
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
 // Converts a string of numbers into an array of numbers
 // I don't validate for numerical values, so input better be good
@@ -44,4 +48,80 @@ func CopySlice[T string | int | bool](s []T) []T {
 	copy(c, s)
 
 	return c
+}
+
+func Copy2DSlice[T string | int | bool](s [][]T) [][]T {
+	c := make([][]T, len(s))
+
+	copy(c, s)
+
+	return c
+}
+
+func Combinations[T any](pool []T, r int) [][]T {
+	n := len(pool)
+	if r > n || r <= 0 {
+		return nil
+	}
+
+	var result [][]T
+	indices := make([]int, r)
+	for i := 0; i < r; i++ {
+		indices[i] = i
+	}
+
+	for {
+		comb := make([]T, r)
+		for i, idx := range indices {
+			comb[i] = pool[idx]
+		}
+		result = append(result, comb)
+
+		// Find the rightmost index that can be incremented
+		i := r - 1
+		for i >= 0 && indices[i] == i+n-r {
+			i--
+		}
+		if i < 0 {
+			break
+		}
+
+		indices[i]++
+		for j := i + 1; j < r; j++ {
+			indices[j] = indices[j-1] + 1
+		}
+	}
+
+	return result
+}
+
+// Equiv of python's range function
+func Range(n int) []int {
+	nums := make([]int, n)
+
+	for i := 0; i < n; i++ {
+		nums[i] = i
+	}
+
+	return nums
+}
+
+func ParseIntoIntSlice(s string) []int {
+	s = strings.Trim(s, "[]")
+	if s == "" {
+		return []int{}
+	}
+
+	parts := strings.Fields(s)
+	result := make([]int, len(parts))
+
+	for i, p := range parts {
+		val, err := strconv.Atoi(p)
+		if err != nil {
+			panic(fmt.Sprintf("ParseSlice: invalid number %q in %q", p, s))
+		}
+		result[i] = val
+	}
+
+	return result
 }
